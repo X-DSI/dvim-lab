@@ -1,0 +1,4 @@
+# neovim runtime data — reinstalled by plugin manager, never commit
+**/.local/share/nvim/
+**/.local/state/nvim/
+**/.cache/nvim/
