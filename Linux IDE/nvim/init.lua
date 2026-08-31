@@ -35,6 +35,17 @@ vim.keymap.set("n", "gl", ":bnext<CR>")
 vim.keymap.set("n", "<C-x>", ":bdelete<CR>")
 vim.keymap.set("n", "<leader>tt", ":ToggleTerm<CR>")
 
+-- Move out of terminal into other windows with Ctrl+h/j/k/l directly
+vim.keymap.set('t', '<C-h>', [[<C-\><C-n><C-w>h]], { desc = 'Terminal: go left' })
+vim.keymap.set('t', '<C-j>', [[<C-\><C-n><C-w>j]], { desc = 'Terminal: go down' })
+vim.keymap.set('t', '<C-k>', [[<C-\><C-n><C-w>k]], { desc = 'Terminal: go up' })
+vim.keymap.set('t', '<C-l>', [[<C-\><C-n><C-w>l]], { desc = 'Terminal: go right' })
+
+-- And the same in normal mode so it's symmetric everywhere
+vim.keymap.set('n', '<C-h>', '<C-w>h', { desc = 'Go to left window' })
+vim.keymap.set('n', '<C-j>', '<C-w>j', { desc = 'Go to down window' })
+vim.keymap.set('n', '<C-k>', '<C-w>k', { desc = 'Go to up window' })
+
 -- Disable unused providers
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
