@@ -2,6 +2,9 @@
 
 A curated Neovim IDE, lazy.nvim based, versioned and reproducible on a fresh Mac.
 
+> **On Linux?** See [SETUP-linux.md](SETUP-linux.md). The Neovim config is identical
+> on both platforms; the installer and its dependencies are not.
+
 - **Current version:** see `macOS IDE/nvim/lua/oncilla/version.lua` (the dashboard reads it from there)
 - **Installer:** `macOS IDE/bootstrap-macos.sh`
 - **Platform:** macOS, Apple Silicon, Homebrew. (A `Linux IDE/` config exists in this

@@ -25,6 +25,17 @@ vim.opt.scrolloff = 8
 -- Load plugins
 require("lazy").setup("plugins")
 
+-- nvim-treesitter's `main` branch installs parsers AND their queries into
+-- stdpath("data")/site. lazy.nvim rewrites runtimepath at startup; where that
+-- path doesn't survive the rewrite, the parsers still load but every query --
+-- highlights, folds, indents, injections -- goes silently missing, which reads
+-- as "treesitter is installed but nothing is highlighted". Guarded, so it is a
+-- no-op wherever the path is already present.
+local ts_site = vim.fn.stdpath("data") .. "/site"
+if not vim.list_contains(vim.opt.rtp:get(), ts_site) then
+  vim.opt.rtp:append(ts_site)
+end
+
 -- Keymaps
 vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
 vim.keymap.set("n", "<leader>ff", ":Telescope find_files<CR>")

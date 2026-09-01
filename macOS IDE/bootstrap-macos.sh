@@ -80,7 +80,12 @@ record_installed() { SUM_INSTALLED="${SUM_INSTALLED}|$1"; }
 record_skipped()   { SUM_SKIPPED="${SUM_SKIPPED}|$1"; }
 record_backup()    { SUM_BACKED_UP="${SUM_BACKED_UP}|$1"; }
 record_failed()    { SUM_FAILED="${SUM_FAILED}|$1"; }
-record_note()      { SUM_NOTES="${SUM_NOTES}|$1"; }
+# Notes are deduplicated: several steps legitimately want to say the same
+# thing (e.g. "open a new terminal"), but the summary should say it once.
+record_note() {
+  case "|$SUM_NOTES|" in *"|$1|"*) return 0 ;; esac
+  SUM_NOTES="${SUM_NOTES}|$1"
+}
 
 # Print a "|"-delimited list one entry per line, or a placeholder if empty.
 print_list() {
