@@ -45,7 +45,9 @@ MIN_JAVA_MAJOR=21      # eclipse.jdt.ls 1.41+ will not run on older
 COMPOSER_BIN='$HOME/.config/composer/vendor/bin'
 COMPOSER_PATH_LINE="export PATH=\"$COMPOSER_BIN:\$PATH\""
 LOCAL_BIN='$HOME/.local/bin'
+CARGO_BIN='$HOME/.cargo/bin'
 LOCAL_BIN_LINE="export PATH=\"$LOCAL_BIN:\$PATH\""
+CARGO_BIN_LINE="export PATH=\"$CARGO_BIN:\$PATH\""
 
 DRY_RUN=0
 ASSUME_YES=0
@@ -529,16 +531,106 @@ npm_global() {
   fi
 }
 
-if ! command -v npm >/dev/null 2>&1; then
+# Existence is not enough. npm's tree-sitter-cli ships a PREBUILT binary linked
+# against a recent glibc (2.39, i.e. Ubuntu 24.04). On Ubuntu 22.04 (glibc 2.35)
+# it installs cleanly, lands on PATH, and then dies the moment it is executed:
+#
+#   /lib/aarch64-linux-gnu/libc.so.6: version `GLIBC_2.39' not found
+#
+# nvim-treesitter then fails every parser build and you get an editor with
+# treesitter "installed" and nothing highlighted. So the test is whether the
+# binary RUNS, and the fallback is cargo, which compiles against the local libc.
+ts_works() {
+  command -v tree-sitter >/dev/null 2>&1 && tree-sitter --version >/dev/null 2>&1
+}
+
+if ts_works; then
+  ok "tree-sitter CLI already installed and working — $(tree-sitter --version)"
+  record_skipped "tree-sitter CLI (present: $(tree-sitter --version))"
+elif ! command -v npm >/dev/null 2>&1; then
   fail "npm unavailable — Node was skipped or failed. Cannot install the tree-sitter CLI."
   record_skipped "tree-sitter CLI (no npm)"
 else
-  info "${DIM}required by the 'main' branch of nvim-treesitter${RESET}"
-  install_step "tree-sitter CLI" \
-    "command -v tree-sitter" \
-    "tree-sitter --version" \
-    npm_global tree-sitter-cli
+  if command -v tree-sitter >/dev/null 2>&1; then
+    warn "A tree-sitter binary is on PATH but will not execute:"
+    info "${DIM}  $(tree-sitter --version 2>&1 | head -1)${RESET}"
+  else
+    warn "tree-sitter CLI is not installed."
+  fi
+  info "${DIM}required by the 'main' branch of nvim-treesitter to build parsers${RESET}"
+
+  GLIBC_VER="$(ldd --version 2>/dev/null | head -1 | awk '{print $NF}')"
+  info "System glibc: ${GLIBC_VER:-unknown}"
+
+  if ! command -v tree-sitter >/dev/null 2>&1; then
+    if ask_yn "Install tree-sitter CLI from npm?" "y"; then
+      run_cmd npm_global tree-sitter-cli || warn "npm install reported a failure."
+    else
+      record_skipped "tree-sitter CLI (declined)"
+    fi
+  fi
+
+  # Whether it was just installed or was already broken, judge it by execution.
+  if ts_works; then
+    ok "tree-sitter CLI working — $(tree-sitter --version)"
+    record_installed "tree-sitter CLI ($(tree-sitter --version))"
+  elif [ "$DRY_RUN" -eq 1 ]; then
+    info "${DIM}(dry-run: skipping the run-check and the cargo fallback)${RESET}"
+  else
+    warn "The npm tree-sitter binary does not run on this system."
+    info "npm ships a prebuilt binary needing glibc 2.39; this system has ${GLIBC_VER:-an older glibc}."
+    info "The fix is to build it from source with cargo, which links against the local libc."
+    info "${DIM}This compiles Rust and takes a few minutes.${RESET}"
+
+    if ask_yn "Build tree-sitter CLI from source with cargo?" "y"; then
+      # The broken npm binary would shadow the cargo one depending on PATH order.
+      if command -v tree-sitter >/dev/null 2>&1; then
+        if ask_yn "Remove the broken npm tree-sitter-cli first (recommended)?" "y"; then
+          if [ -w "$(npm config get prefix 2>/dev/null)" ]; then
+            run_cmd npm uninstall -g tree-sitter-cli
+          else
+            run_cmd sudo npm uninstall -g tree-sitter-cli
+          fi
+          record_backup "removed the non-functional npm tree-sitter-cli"
+        fi
+      fi
+
+      if ! command -v cargo >/dev/null 2>&1; then
+        warn "cargo is not installed."
+        if ask_yn "Install the Rust toolchain via rustup?" "y"; then
+          run_cmd bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path" \
+            || handle_failure "rustup installation"
+          # rustup writes here; make it visible to the rest of this run.
+          [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+          PATH="$HOME/.cargo/bin:$PATH"
+          record_installed "rust toolchain (rustup)"
+        fi
+      fi
+
+      if command -v cargo >/dev/null 2>&1; then
+        if run_cmd cargo install tree-sitter-cli; then
+          PATH="$HOME/.cargo/bin:$PATH"
+          if ts_works; then
+            ok "tree-sitter CLI built and working — $(tree-sitter --version)"
+            record_installed "tree-sitter CLI ($(tree-sitter --version), built with cargo)"
+            add_rc_line "$CARGO_BIN_LINE" "Rust/cargo binaries (tree-sitter CLI)"
+          else
+            handle_failure "tree-sitter CLI (built, but still not runnable)"
+          fi
+        else
+          handle_failure "cargo install tree-sitter-cli"
+        fi
+      else
+        record_failed "tree-sitter CLI (no cargo available)"
+        record_note "WITHOUT a working tree-sitter CLI, NO parsers build and nothing is highlighted."
+      fi
+    else
+      record_skipped "tree-sitter CLI cargo fallback (declined)"
+      record_note "WITHOUT a working tree-sitter CLI, NO parsers build and nothing is highlighted."
+    fi
+  fi
 fi
+pause
 
 # ===========================================================================
 # Step 6 — PHP and Composer
@@ -686,6 +778,22 @@ case ":${PATH}:" in
                           record_skipped "~/.local/bin PATH entry (already active)" ;;
   *) add_rc_line "$LOCAL_BIN_LINE" "user-local binaries (fd shim)" ;;
 esac
+
+# Editing the rc file only affects shells started AFTERWARDS. This script, and
+# the headless Neovim it launches in Step 12, still carry the old PATH -- which
+# is how conform ends up reporting "phpcbf unavailable" on a run that just
+# installed phpcbf. Make the new entries live in this process too.
+export PATH="$HOME/.config/composer/vendor/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+
+info "Verifying the tools resolve on the updated PATH:"
+for tool in prettierd eslint_d phpcs phpcbf fd; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    ok "$tool -> $(command -v "$tool")"
+  else
+    warn "$tool does NOT resolve — formatting/linting for it will silently do nothing."
+    record_note "$tool is not on PATH; check the entries in $SHELL_RC."
+  fi
+done
 pause
 
 # ===========================================================================

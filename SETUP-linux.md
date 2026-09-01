@@ -78,6 +78,38 @@ formatting silently doing nothing.
 export PATH="$HOME/.config/composer/vendor/bin:$PATH"
 ```
 
+### The tree-sitter CLI and glibc
+
+npm's `tree-sitter-cli` package ships a **prebuilt binary linked against glibc
+2.39** — the version on Ubuntu 24.04. On Ubuntu 22.04 (glibc 2.35) it installs
+cleanly, lands on `PATH`, and then fails the moment anything executes it:
+
+```
+tree-sitter: /lib/aarch64-linux-gnu/libc.so.6: version `GLIBC_2.39' not found
+```
+
+nvim-treesitter then fails every parser build, and you end up with an editor where
+treesitter looks installed and **nothing is highlighted**. `:checkhealth
+nvim-treesitter` shows only the query-only sub-grammars (`ecma`, `html_tags`,
+`jsx`) under "Installed languages", with none of the real parsers.
+
+The installer therefore tests whether the binary actually **runs**, not merely
+whether it exists. If it doesn't, it offers to remove the broken npm package and
+build the CLI from source with `cargo`, which links against the local libc. That
+needs the Rust toolchain (installed via rustup if absent) and takes a few minutes.
+
+If you hit this after the fact, the manual fix is:
+
+```bash
+sudo npm uninstall -g tree-sitter-cli
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+. "$HOME/.cargo/env"
+cargo install tree-sitter-cli
+```
+
+Then reopen Neovim — `treesitter.lua` calls `install()` on every startup, so the
+parsers build on the next launch.
+
 ### `fd` is called `fdfind`
 
 Debian already had a package named `fd`, so `fd-find` installs its binary as
@@ -111,7 +143,7 @@ Debian already had a package named `fd`, so `fd-find` installs its binary as
 |---|---|---|
 | **Neovim** | official release tarball → `/opt/nvim` | apt's is 0.6/0.9; config needs ≥ 0.11 |
 | **Node.js** | NodeSource LTS repo | apt's is 12.x on 22.04; servers need ≥ 18 |
-| **tree-sitter CLI** | `npm -g tree-sitter-cli` | not packaged; needed by nvim-treesitter's `main` branch |
+| **tree-sitter CLI** | npm, **falling back to `cargo`** — see below | not packaged; needed by nvim-treesitter's `main` branch |
 | **Nerd Font** | nerd-fonts release zip → `~/.local/share/fonts` | no cask equivalent |
 
 An existing new-enough Node from `nvm`, `fnm`, or `volta` is detected and left
@@ -200,6 +232,13 @@ printf '<?php\n$x=1;\n'     > /tmp/t.php && nvim /tmp/t.php   # :w should reform
 
 If JS reformats and PHP doesn't, it's the Composer PATH entry — check it points at
 `~/.config/composer/vendor/bin`.
+
+A `phpcbf unavailable: Command 'phpcbf' not found` in `:checkhealth conform`
+almost always means the shell predates the rc edit rather than a failed install.
+Open a **new** terminal, or `source ~/.bashrc`, and check again. The installer
+exports the new entries into its own environment before the first launch so the
+headless run isn't caught by this, and prints where each tool resolves at the end
+of the PATH step.
 
 `:checkhealth conform` should report `phpcbf ready (php)` and `prettierd ready`
 for the ten JS/TS/CSS/JSON/Markdown filetypes.
