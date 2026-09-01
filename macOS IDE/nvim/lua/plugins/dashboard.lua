@@ -85,7 +85,27 @@ return {
         end
       end
 
-      local version = vim.version()
+      local oncilla = require("oncilla.version")
+
+      -- Last line of the dashboard: which Neovim is underneath, and what lazy
+      -- actually loaded. Mirrors snacks' own `startup` section, with the Neovim
+      -- version folded in so the whole runtime story sits on one row.
+      local function runtime_section()
+        local v = vim.version()
+        local stats = require("lazy.stats").stats()
+        local ms = math.floor(stats.startuptime * 100 + 0.5) / 100
+
+        return {
+          align = "center",
+          text = {
+            { ("⚡ Neovim v%d.%d.%d"):format(v.major, v.minor, v.patch), hl = "footer" },
+            { " · ", hl = "footer" },
+            { stats.loaded .. "/" .. stats.count, hl = "special" },
+            { " plugins in ", hl = "footer" },
+            { ms .. "ms", hl = "special" },
+          },
+        }
+      end
 
       require("snacks").setup({
         dashboard = {
@@ -104,19 +124,20 @@ return {
             logo_section(),
             {
               align = "center",
-              text = { { "Oncilla — Technology for Ministry", hl = "footer" } },
+              text = {
+                { "Oncilla IDE", hl = "header" },
+                { "  v" .. oncilla.string(), hl = "special" },
+              },
             },
             {
               align = "center",
               padding = 1,
-              text = {
-                { ("Neovim v%d.%d.%d"):format(version.major, version.minor, version.patch), hl = "footer" },
-              },
+              text = { { "Technology for Ministry", hl = "footer" } },
             },
             -- gap = 0 keeps the whole dashboard inside a ~26 row window;
             -- with gap = 1 the footer scrolls off on short terminals.
             { section = "keys", gap = 0, padding = 1 },
-            { section = "startup" },
+            runtime_section,
           },
         },
 
