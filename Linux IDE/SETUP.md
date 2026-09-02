@@ -1,11 +1,11 @@
 # Oncilla IDE — Setup (Linux)
 
-The Linux counterpart to [SETUP.md](SETUP.md), which covers macOS. The Neovim
+The Linux counterpart to [macOS IDE/SETUP.md](../macOS%20IDE/SETUP.md). The Neovim
 config is **byte-identical** between the two platforms; only the installer differs.
 
-- **Installer:** `Linux IDE/bootstrap-linux.sh`
+- **Installer:** `bootstrap-linux.sh`, beside this file
 - **Target:** Debian / Ubuntu (apt), x86_64 or arm64
-- **Version:** see `Linux IDE/nvim/lua/oncilla/version.lua`
+- **Version:** see `nvim/lua/oncilla/version.lua`
 
 ---
 
@@ -24,6 +24,33 @@ Same flags as the macOS script: `--dry-run`, `--yes`, `--mode=replace|sidebyside
 **One difference worth knowing up front:** on macOS only a single step needed
 `sudo`. Here apt needs root throughout, plus installing Neovim into `/opt`. Every
 privileged command is printed before it runs.
+
+---
+
+## The `ovim` command
+
+The IDE is called **OVIM** — that's the name on the dashboard, and `ovim` is how you
+open it:
+
+```bash
+alias ovim='nvim'
+```
+
+The installer adds that to your shell rc file, idempotently. In the default
+**replace** mode `~/.config/nvim` *is* the IDE, so `ovim` and `nvim` are simply two
+names for the same editor, sharing one config and one plugin tree. In
+**side-by-side** mode the alias carries the `NVIM_APPNAME` instead, so `ovim` opens
+the IDE while `nvim` keeps running your existing config.
+
+Being an alias, `ovim` works in interactive shells. If you ever want it available to
+other programs too — `EDITOR=ovim`, `git config core.editor ovim`, desktop entries —
+replace it with a two-line script on `PATH`:
+
+```sh
+# ~/.local/bin/ovim
+#!/bin/sh
+exec nvim "$@"
+```
 
 ---
 
@@ -173,10 +200,10 @@ already exist.
 ## Handling an existing Neovim config
 
 Identical to macOS — three choices, explained in full in
-[SETUP.md](SETUP.md#handling-an-existing-neovim-or-spacevim-config):
+[macOS IDE/SETUP.md](../macOS%20IDE/SETUP.md#handling-an-existing-neovim-or-spacevim-config):
 
 1. **Back up and replace** — existing config and data moved to `.bak.TIMESTAMP`.
-2. **Side-by-side** — installs to `~/.config/oncilla` with an `oide` alias, leaving
+2. **Side-by-side** — installs to `~/.config/oncilla` with an `ovim` alias, leaving
    `~/.config/nvim` untouched.
 3. **Quit.**
 
@@ -200,7 +227,7 @@ as empty boxes.
 ## After installing
 
 ```bash
-nvim        # or `oide` in side-by-side mode
+ovim        # or `nvim` — both open this config in replace mode
 ```
 
 Verify with `:Lazy` (31 plugins), `:Mason` (8 servers), and `:checkhealth`.
@@ -261,4 +288,4 @@ for the ten JS/TS/CSS/JSON/Markdown filetypes.
 
 ## Versioning
 
-Shared with macOS — see [SETUP.md](SETUP.md#versioning).
+Shared with macOS — see [macOS IDE/SETUP.md](../macOS%20IDE/SETUP.md#versioning).

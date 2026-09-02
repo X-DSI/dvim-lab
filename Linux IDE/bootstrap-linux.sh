@@ -30,7 +30,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SRC="$SCRIPT_DIR/nvim"
 
 DEFAULT_APPNAME="oncilla"
-DEFAULT_ALIAS="oide"
+DEFAULT_ALIAS="ovim"
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
@@ -119,7 +119,8 @@ print_summary() {
       printf '   • Your old config remains at ~/.config/nvim, launched by %snvim%s\n' "$BOLD" "$RESET" ;;
     replace)
       printf '   • Replaced ~/.config/nvim (symlinked to this repo)\n'
-      printf '   • Oncilla IDE : %snvim%s\n' "$BOLD" "$RESET" ;;
+      printf '   • Oncilla IDE : %sovim%s — and plain %snvim%s opens the same config\n' \
+        "$BOLD" "$RESET" "$BOLD" "$RESET" ;;
     *)
       printf '   %s(no config change was made)%s\n' "$DIM" "$RESET" ;;
   esac
@@ -310,7 +311,7 @@ fi
 
 if ! command -v apt-get >/dev/null 2>&1; then
   fail "No apt-get found. This installer targets Debian and Ubuntu."
-  info "On another distro, read the dependency manifest in SETUP-linux.md and install by hand."
+  info "On another distro, read the dependency manifest in SETUP.md (beside this script) and install by hand."
   exit 1
 fi
 
@@ -1023,7 +1024,11 @@ else
       handle_failure "symlinking ~/.config/nvim"
     fi
   fi
-  record_note "Launch the Oncilla IDE with: nvim"
+  # In replace mode ~/.config/nvim IS the IDE, so `ovim` is just a second name
+  # for the same editor -- no NVIM_APPNAME, one config, one plugin tree.
+  add_rc_line "alias ovim='nvim'" "Oncilla IDE launcher"
+  ALIAS_NAME="ovim"
+  record_note "Launch with: ovim (or nvim -- both open this config)"
 fi
 pause
 

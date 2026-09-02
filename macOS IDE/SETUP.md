@@ -2,13 +2,12 @@
 
 A curated Neovim IDE, lazy.nvim based, versioned and reproducible on a fresh Mac.
 
-> **On Linux?** See [SETUP-linux.md](SETUP-linux.md). The Neovim config is identical
+> **On Linux?** See [Linux IDE/SETUP.md](../Linux%20IDE/SETUP.md). The Neovim config is identical
 > on both platforms; the installer and its dependencies are not.
 
-- **Current version:** see `macOS IDE/nvim/lua/oncilla/version.lua` (the dashboard reads it from there)
-- **Installer:** `macOS IDE/bootstrap-macos.sh`
-- **Platform:** macOS, Apple Silicon, Homebrew. (A `Linux IDE/` config exists in this
-  repo but has no installer and is not yet at feature parity.)
+- **Current version:** see `nvim/lua/oncilla/version.lua` (the dashboard reads it from there)
+- **Installer:** `bootstrap-macos.sh`, beside this file
+- **Platform:** macOS, Apple Silicon, Homebrew.
 
 ---
 
@@ -55,6 +54,33 @@ Recommended first run on a new machine:
   symlink — and only the link, never the directory it points at.
 - **It stops on errors.** A failed step asks whether to continue or abort rather
   than barrelling ahead.
+
+---
+
+## The `ovim` command
+
+The IDE is called **OVIM** — that's the name on the dashboard, and `ovim` is how you
+open it:
+
+```bash
+alias ovim='nvim'
+```
+
+The installer adds that to your shell rc file, idempotently. In the default
+**replace** mode `~/.config/nvim` *is* the IDE, so `ovim` and `nvim` are simply two
+names for the same editor, sharing one config and one plugin tree. In
+**side-by-side** mode the alias carries the `NVIM_APPNAME` instead, so `ovim` opens
+the IDE while `nvim` keeps running your existing config.
+
+Being an alias, `ovim` works in interactive shells. If you ever want it available to
+other programs too — `EDITOR=ovim`, `git config core.editor ovim`, desktop entries —
+replace it with a two-line script on `PATH`:
+
+```sh
+# ~/.local/bin/ovim
+#!/bin/sh
+exec nvim "$@"
+```
 
 ---
 
@@ -164,7 +190,8 @@ When something exists, it stops and offers three choices:
 ### Option 1 — Back up and replace
 
 Moves the existing config to `~/.config/nvim.bak.YYYYMMDD-HHMMSS`, then symlinks
-this repo into `~/.config/nvim`. Plain `nvim` launches the Oncilla IDE.
+this repo into `~/.config/nvim`, and adds an `ovim` alias. Both `ovim` and `nvim`
+then open the IDE — one config, one plugin tree, two names.
 
 It asks *separately* about the plugin/runtime data directories, because leaving
 stale lazy.nvim and Mason state behind can confuse the first launch. SpaceVim's own
@@ -186,21 +213,21 @@ Leaves `~/.config/nvim` **completely untouched**. Installs this config at
 `~/.config/oncilla` and adds a shell alias:
 
 ```bash
-alias oide='NVIM_APPNAME=oncilla nvim'
+alias ovim='NVIM_APPNAME=oncilla nvim'
 ```
 
-Both names and the alias are promptable — press Enter for the defaults.
+The app name and the alias are both promptable — press Enter for the defaults.
 
 ```
 nvim   ->  your existing config
-oide   ->  the Oncilla IDE
+ovim   ->  OVIM (the Oncilla IDE)
 ```
 
 This uses Neovim's built-in `NVIM_APPNAME` mechanism, which is the correct way to
 run parallel configurations. Setting it redirects *all* of Neovim's directories at
 once, so the two installs share nothing:
 
-| | `nvim` | `oide` |
+| | `nvim` | `ovim` |
 |---|---|---|
 | config | `~/.config/nvim` | `~/.config/oncilla` |
 | plugins/data | `~/.local/share/nvim` | `~/.local/share/oncilla` |
@@ -256,7 +283,7 @@ all render as empty boxes. The installer reminds you of this at the end.
 
 ## After installing
 
-Open the editor (`nvim`, or `oide` in side-by-side mode) and let it work. On the
+Open the editor with `ovim` and let it work. On the
 first launch it bootstraps lazy.nvim, installs all pinned plugins, compiles the
 treesitter parsers, and has Mason download the language servers.
 
@@ -278,7 +305,7 @@ unloaded ones are lazy-loaded by filetype and will differ from run to run.
 
 ## Versioning
 
-The IDE version lives in `macOS IDE/nvim/lua/oncilla/version.lua` and is displayed
+The IDE version lives in `nvim/lua/oncilla/version.lua` and is displayed
 on the dashboard. It follows [Semantic Versioning](https://semver.org):
 
 - **MAJOR** — a breaking change: keymaps, commands or workflows change or disappear
@@ -307,7 +334,8 @@ with a new patch version instead.
 
 ## Known gaps
 
-- **`Linux IDE/`** has no installer and lags the macOS config (no dashboard).
+- **`Linux IDE/`** now has its own installer and a byte-identical config; see
+  [Linux IDE/SETUP.md](../Linux%20IDE/SETUP.md).
 - **Debugging is not wired up.** `nvim-dap-ui` is configured, but no DAP adapter is
   defined anywhere in the config, so there is nothing to attach to. The installer
   therefore provisions no debug adapters.

@@ -125,7 +125,8 @@ return {
             {
               align = "center",
               text = {
-                { "Oncilla IDE", hl = "header" },
+                { "OVIM", hl = "header" },
+                { " — Oncilla IDE", hl = "footer" },
                 { "  v" .. oncilla.string(), hl = "special" },
               },
             },

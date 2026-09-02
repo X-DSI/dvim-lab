@@ -36,7 +36,7 @@ CONFIG_SRC="$SCRIPT_DIR/nvim"
 
 # Defaults for the side-by-side install mode (Step 7).
 DEFAULT_APPNAME="oncilla"
-DEFAULT_ALIAS="oide"
+DEFAULT_ALIAS="ovim"
 
 # Config-mode state. Declared up-front because print_summary may run before
 # Step 8 has decided any of them (e.g. the user quits during Step 2).
@@ -121,7 +121,8 @@ print_summary() {
       printf '   • Your old config remains at ~/.config/nvim, launched by %snvim%s\n' "$BOLD" "$RESET" ;;
     replace)
       printf '   • Replaced ~/.config/nvim (symlinked to this repo)\n'
-      printf '   • Oncilla IDE : %snvim%s\n' "$BOLD" "$RESET" ;;
+      printf '   • Oncilla IDE : %sovim%s — and plain %snvim%s opens the same config\n' \
+        "$BOLD" "$RESET" "$BOLD" "$RESET" ;;
     *)
       printf '   %s(no config change was made)%s\n' "$DIM" "$RESET" ;;
   esac
@@ -830,7 +831,11 @@ else
       handle_failure "symlinking ~/.config/nvim"
     fi
   fi
-  record_note "Launch the Oncilla IDE with: nvim"
+  # In replace mode ~/.config/nvim IS the IDE, so `ovim` is just a second name
+  # for the same editor -- no NVIM_APPNAME, one config, one plugin tree.
+  add_zshrc_line "alias ovim='nvim'" "Oncilla IDE launcher"
+  ALIAS_NAME="ovim"
+  record_note "Launch with: ovim (or nvim -- both open this config)"
 fi
 pause
 
