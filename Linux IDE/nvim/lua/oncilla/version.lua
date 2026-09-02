@@ -12,11 +12,11 @@
 -- change; 1.0.0 is the promise that it won't, without a MAJOR bump.
 --
 -- Tag every release in git so the number means something outside this file:
---   git tag -a v0.1.0 -m "Oncilla IDE v0.1.0"
+--   git tag -a v0.2.0 -m "OVIM v0.2.0"
 
 local M = {
   major = 0,
-  minor = 1,
+  minor = 2,
   patch = 0,
   -- Pre-release tag, e.g. "beta.1" -> "0.1.0-beta.1". nil for a plain release.
   prerelease = nil,

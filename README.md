@@ -7,11 +7,21 @@ OVIM is **not a fork of Neovim**. It is a configuration — a set of Lua files a
 pinned plugin list — plus an installer that reproduces the whole environment on a
 fresh machine. You still run Neovim; `ovim` is just the name it answers to.
 
-```
-        ▄▄  ▄▄
-       ████████        OVIM — Oncilla IDE
-        ▀████▀         Technology for Ministry
-```
+![The OVIM dashboard: the Oncilla logo in ANSI block art, the title "OVIM — Oncilla
+IDE v0.2.0", the tagline "Technology for Ministry", a six-item menu, and a footer
+reading "Neovim v0.12.5 · 29/31 plugins in 82.67ms"](docs/screenshots/dashboard.png)
+
+---
+
+## What it looks like
+
+![OVIM editing its own init.lua: the file tree on the left, a buffer tab across the
+top, treesitter-highlighted Lua in the main window, LSP diagnostic markers in the
+gutter and a warning count in the statusline, and a zsh terminal split across the
+bottom](docs/screenshots/editor.png)
+
+The file tree, buffer tabs, treesitter highlighting, live LSP diagnostics, the
+lualine status bar and an integrated terminal — all from the config in this repo.
 
 ---
 
@@ -27,7 +37,7 @@ vim-ide/
 │   ├── bootstrap-linux.sh    interactive installer for Debian/Ubuntu
 │   ├── SETUP.md              Linux setup and dependency manifest
 │   └── nvim/                 the same config
-└── wiki/                     full documentation — start at wiki/Home.md
+└── (wiki)                    full documentation — see the project Wiki
 ```
 
 The two `nvim/` trees are **byte-identical**. Only the installers differ, because
@@ -88,13 +98,16 @@ PHP support is tuned for WordPress: intelephense is configured with the WordPres
 
 ## Documentation
 
-Start at **[wiki/Home.md](wiki/Home.md)**.
+Full documentation lives in the **[project Wiki](https://gitlab.com/oncilla-llc-group/vim-ide/-/wikis/home)**.
 
 | Page | What it covers |
 |---|---|
-| [Architecture](wiki/Architecture.md) | What OVIM is, what it does, how it works |
-| [Installation](wiki/Installation.md) | The setup process, both platforms |
-| [Keybindings](wiki/Keybindings.md) | Every shortcut — Neovim's and ours |
+| [Architecture](https://gitlab.com/oncilla-llc-group/vim-ide/-/wikis/Architecture) | What OVIM is, what it does, how it works |
+| [Installation](https://gitlab.com/oncilla-llc-group/vim-ide/-/wikis/Installation) | The setup process, both platforms |
+| [Keybindings](https://gitlab.com/oncilla-llc-group/vim-ide/-/wikis/Keybindings) | Every shortcut — Neovim's and ours |
+
+The wiki is a separate git repository (`vim-ide.wiki.git`), so it is not part of a
+clone of this project.
 
 Platform specifics live beside each installer: [macOS](macOS%20IDE/SETUP.md),
 [Linux](Linux%20IDE/SETUP.md).
