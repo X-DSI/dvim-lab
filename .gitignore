@@ -2,3 +2,6 @@
 **/.local/share/nvim/
 **/.local/state/nvim/
 **/.cache/nvim/
+
+# macOS Finder metadata
+.DS_Store
