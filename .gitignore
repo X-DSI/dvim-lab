@@ -3,5 +3,15 @@
 **/.local/state/nvim/
 **/.cache/nvim/
 
-# macOS Finder metadata
+# macOS metadata
 .DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Editor swap/backup/undo files
+*.swp
+*.swo
+*~
+*.un~
+Session.vim
